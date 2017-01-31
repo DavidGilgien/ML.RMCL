@@ -68,7 +68,7 @@ MCL_iter = function(M, M_g, reg, r, eps){
   
   #Inflation
   M_infl = M_exp ^ r
-  M = M_infl %*% Diagonal(x = 1/colSums(M_infl))
+  M = M_infl %*% Diagonal(x = 1/Matrix::colSums(M_infl))
   
   
   #Pruning
@@ -81,7 +81,7 @@ MCL_iter = function(M, M_g, reg, r, eps){
                    dims = dim(M), 
                    dimnames = dimnames(M))
   M = round(M, 12) # Some values were not accurate due to precision points
-  M = M %*% Diagonal(x = 1/colSums(M))
+  M = M %*% Diagonal(x = 1/Matrix::colSums(M))
   return(M)
 }
 
@@ -131,7 +131,7 @@ weighTrans = function(graph){
 #' \code{time} a vector of size 3 with the duration of each phase in seconds.
 #' @export
 #' @examples
-#' g = generateEdgelist(n = 1000)
+#' g = generateEdgeList(n = 1000)
 #' clustering = ML_RMCL(g)
 ML_RMCL = function(g, r = 2, reg = TRUE, iter.max = 200, n.threshold = 200,
                   last.reg = TRUE, eps = 0.001, save.p1 = NULL, load.p1 = NULL, 
@@ -161,14 +161,13 @@ ML_RMCL = function(g, r = 2, reg = TRUE, iter.max = 200, n.threshold = 200,
     if(n.threshold > min(sizes)) graphs = graphs[1:which(sizes < n.threshold)[1]]
   }
   p1 = as.numeric(Sys.time())
-  graphs <<- graphs
   # Phase 2: curtailed MCL:
   if(length(graphs) != 1){
     for(i in seq(length(graphs), 2, -1)){
       if(curt.weight.trans) M_g = getSparseMat(weighTrans(graphs[[i]]))
       else M_g = getSparseMat(graphs[[i]])
       diag(M_g) = 1
-      M_g = M_g %*% Diagonal(x = 1/colSums(M_g))
+      M_g = M_g %*% Diagonal(x = 1/Matrix::colSums(M_g))
       if(i == length(graphs)) M = M_g
       for(j in seq(1,iter.curt)){
         M = MCL_iter(M, M_g, reg, r, eps)
@@ -180,7 +179,7 @@ ML_RMCL = function(g, r = 2, reg = TRUE, iter.max = 200, n.threshold = 200,
   p2 = as.numeric(Sys.time())
   M_g = getSparseMat(graphs[[1]])
   diag(M_g) = 1
-  M_g = M_g %*% Diagonal(x = 1/colSums(M_g))
+  M_g = M_g %*% Diagonal(x = 1/Matrix::colSums(M_g))
   if(length(graphs) == 1) M = M_g
   M_last = M
   i = 0
