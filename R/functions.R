@@ -42,6 +42,21 @@ nCut = function(g, cluster, ignore.zero = FALSE){
   
 }
 
+
+#' Average Normalized N-Cut
+#'
+#' This function computes the average normalized n-cut of a clustering.
+#' @param g graph object of class \code{\link{ELgraph}}, the base graph.
+#' @param clusters vector of size \code{n}. Element \code{i} indicates the cluster of node \code{v_i}.
+#' @param verb boolean value: if \code{TRUE}, the fuction prints the n-cut of all clusters.
+#' @param ignore.zero boolean value: if \code{TRUE}, clusters with internal degree 0 are ignored.
+#' @keywords average normalized ncut n-cut
+#' @return integer: the average normalized n-cut of a clustering.
+#' @export
+#' @examples
+#' g = generateEdgeList(n=1000)
+#' res = ML_MCL(g)
+#' avgNcut(g, res, verb = TRUE)
 avgNcut = function(g, clusters, verb = FALSE, ignore.zero=FALSE ){
   ncs = c()
   for(i in unique(clusters)){
