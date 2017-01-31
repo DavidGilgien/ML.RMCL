@@ -1,3 +1,4 @@
+
 HWM = function(g){
   m1 = c()
   m2 = c()
@@ -84,12 +85,59 @@ MCL_iter = function(M, M_g, reg, r, eps){
   return(M)
 }
 
+interpret = function(M){
+  dat = data.table(summary(M))[, m:= max(x) ,by = j]
+  dat = dat[m == x, min(i), by = j]
+  return(dat$V1)
+}
 
-ML_MCL = function(g, r = 2, reg = TRUE, iter.max = 200, n.threshold = 200,
-                  lastReg = TRUE, eps = 0.001, save.p1 = NULL, load.p1 = NULL, 
+
+weighTrans = function(graph){
+  el = copy(graph$edgeList)
+  outdeg = el[, sum(x), by = i]
+  indeg = el[, sum(x), by = j]
+  deg = merge(outdeg, indeg, by.x = "i", by.y = "j", all=TRUE)
+  deg[ , deg :=rowSums(.SD, na.rm = TRUE), .SDcols = c("V1.x", "V1.y")]
+  deg = deg[, list(i, deg)]
+  if(!graph$directed) deg[, deg:= deg*2]
+  el = merge(el, deg, by.x = "j", by.y = "i")
+  el = merge(el, deg, by.x = "i", by.y = "i")
+  el[, x := x/deg.x + x/deg.y]
+  g2 = copy(graph)
+  g2$edgeList = el[,list(i,j,x)]
+  return(g2)
+}
+
+#' Multi-Level Regularized Markov Clustering
+#'
+#' This function implements the multi-level regularized markov clustering. It uses flow simulation of a graph to find clusters.
+#' @param g graph object of class \code{\link{ELgraph}} on which to perform the clustering
+#' @param r inflation parameter. A higher value yields more refined clusters.
+#' @param reg boolean value. When \code{TRUE}, the MCL iterations in phase 2 are regularized.
+#' @param iter.max integer: maximum number of MCL iterations during phase 3 before the matrix is interpreted as a clustering. The function gives a warning when reached.
+#' @param n.threshold integer: number of nodes under which phase 1 stops the coarsening.
+#' @param last.reg boolean value. When \code{TRUE}, the MCL iterations in phase 3 are regularized.
+#' @param eps integer: epsilon threshold for the pruning operation. During pruning, values under \code{eps/m} are set to 0, where \code{m} is the number of non-zero entries in the column
+#' @param save.p1 string: a name for the storing a the graph hierarchy after the coarsening. A file will be saved at "./phase1/\code{save.p1}.rds". The algorithm can then be used with this file as a strating point by giving the name as the \code{load.p1} parameter.
+#' @param load.p1 string: a name for loading the graph hierarchy. When not \code{NULL}, \code{g} will not be used but the function will take the file "./phase1/\code{load.p1}.rds" as input. Can be used when phase 1 is time consuming and we want different tests with the same coarsening.
+#' @param iter.curt integer: number of iteration of MCL during phase 2.
+#' @param coarse.weight boolean value. When \code{TRUE}, the coarsening phase keeps the edges' weights as indications of the number of merged edges.
+#' @param init.weight.trans boolean value. When \code{TRUE}, the algorithm performs a weight transformation step at the very beginning, before the coarsening.
+#' @param curt.weight.trans boolean value. When \code{TRUE}, the algorithm performs a weight transformation step for each flow matrix initialisation during phase 2.
+#' @param timer boolean value. When \code{TRUE}, the algorithm returns a vector of phases duration in addition of the clustering.
+#' @keywords multilevel multi-level regularizd markov clustering flow simulation
+#' @return A vector of size \code{n} describing the associated cluster of each node.
+#' When \code{timer=TRUE}, a list of two elements: \code{res} the clustering vector and 
+#' \code{time} a vector of size 3 with the duration of each phase in seconds.
+#' @export
+#' @examples
+#' g = generateEdgelist(n = 1000)
+#' clustering = ML_RMCL(g)
+ML_RMCL = function(g, r = 2, reg = TRUE, iter.max = 200, n.threshold = 200,
+                  last.reg = TRUE, eps = 0.001, save.p1 = NULL, load.p1 = NULL, 
                   iter.curt = 4, coarse.weight = TRUE, 
-                  init.weight.trans = FALSE, 
-                  curt.weight.trans = FALSE){
+                  init.weight.trans = FALSE, curt.weight.trans = FALSE,
+                  timer = FALSE){
   
   
   # Phase 1: coarsening
@@ -119,8 +167,6 @@ ML_MCL = function(g, r = 2, reg = TRUE, iter.max = 200, n.threshold = 200,
     for(i in seq(length(graphs), 2, -1)){
       if(curt.weight.trans) M_g = getSparseMat(weighTrans(graphs[[i]]))
       else M_g = getSparseMat(graphs[[i]])
-      #diag(M_g) = colMeans(M_g)
-      #diag(M_g)[diag(M_g) == 0] = 1
       diag(M_g) = 1
       M_g = M_g %*% Diagonal(x = 1/colSums(M_g))
       if(i == length(graphs)) M = M_g
@@ -133,19 +179,18 @@ ML_MCL = function(g, r = 2, reg = TRUE, iter.max = 200, n.threshold = 200,
   # Phase 3: Run MCL on the original graph
   p2 = as.numeric(Sys.time())
   M_g = getSparseMat(graphs[[1]])
-  #diag(M_g) = colMeans(M_g)
   diag(M_g) = 1
-  #diag(M_g)[diag(M_g) == 0] = 1
   M_g = M_g %*% Diagonal(x = 1/colSums(M_g))
   if(length(graphs) == 1) M = M_g
   M_last = M
   i = 0
   repeat{
-    M = MCL_iter(M, M_g, lastReg, r, eps)
+    M = MCL_iter(M, M_g, last.reg, r, eps)
     i = i+1
     if(i > iter.max){
       warning("Max iterations reached, tried to interpret the flow matrix anyways")
-      return(list("res" = interpret(M), "time" = c(p1-p0, p2-p1, as.numeric(Sys.time())-p2)))
+      if(timer) return(list("res" = interpret(M), "time" = c(p1-p0, p2-p1, as.numeric(Sys.time())-p2)))
+      else return(interpret(M))
     }
     if(identical(M, M_last)){
       break
@@ -153,7 +198,8 @@ ML_MCL = function(g, r = 2, reg = TRUE, iter.max = 200, n.threshold = 200,
     M_last = M
   }
   p3 = as.numeric(Sys.time())
-  return(list("res" = interpret(M), "time" = c(p1-p0, p2-p1, p3-p2)))
+  if(timer) return(list("res" = interpret(M), "time" = c(p1-p0, p2-p1, p3-p2)))
+  else return(interpret(M))
 }
 
 

@@ -48,14 +48,14 @@ nCut = function(g, cluster, ignore.zero = FALSE){
 #' This function computes the average normalized n-cut of a clustering.
 #' @param g graph object of class \code{\link{ELgraph}}, the base graph.
 #' @param clusters vector of size \code{n}. Element \code{i} indicates the cluster of node \code{v_i}.
-#' @param verb boolean value: if \code{TRUE}, the fuction prints the n-cut of all clusters.
+#' @param verb boolean value: if \code{TRUE}, the function prints the n-cut of all clusters.
 #' @param ignore.zero boolean value: if \code{TRUE}, clusters with internal degree 0 are ignored.
 #' @keywords average normalized ncut n-cut
 #' @return integer: the average normalized n-cut of a clustering.
 #' @export
 #' @examples
 #' g = generateEdgeList(n=1000)
-#' res = ML_MCL(g)
+#' res = ML_RMCL(g)
 #' avgNcut(g, res, verb = TRUE)
 avgNcut = function(g, clusters, verb = FALSE, ignore.zero=FALSE ){
   ncs = c()
@@ -68,25 +68,37 @@ avgNcut = function(g, clusters, verb = FALSE, ignore.zero=FALSE ){
   return(mean(ncs, na.rm = TRUE))
 }
 
-interpret = function(M){
-  dat = data.table(summary(M))[, m:= max(x) ,by = j]
-  dat = dat[m == x, min(i), by = j]
-  return(dat$V1)
-}
 
-
-weighTrans = function(graph){
-  el = copy(graph$edgeList)
-  outdeg = el[, sum(x), by = i]
-  indeg = el[, sum(x), by = j]
-  deg = merge(outdeg, indeg, by.x = "i", by.y = "j", all=TRUE)
-  deg[ , deg :=rowSums(.SD, na.rm = TRUE), .SDcols = c("V1.x", "V1.y")]
-  deg = deg[, list(i, deg)]
-  if(!graph$directed) deg[, deg:= deg*2]
-  el = merge(el, deg, by.x = "j", by.y = "i")
-  el = merge(el, deg, by.x = "i", by.y = "i")
-  el[, x := x/deg.x + x/deg.y]
-  g2 = copy(graph)
-  g2$edgeList = el[,list(i,j,x)]
-  return(g2)
+#' Clustering Evaluation Against Ground Truth
+#'
+#' This function evaluates the quality of a clustering when a ground truth clustering is available. It computes the
+#' percentage of mismatched nodes when matching the clusters.
+#' @param x vector of size \code{n} describing a clustering.
+#' @param y vector of size \code{n} describing a second clustering that will be compared to \code{x}.
+#' @param verb boolean value: if \code{TRUE}, the function prints a line for each cluster.
+#' @param perf boolean value: if \code{TRUE}, the function stops when it detects a different number of clusters and return 0.
+#' @keywords clustering evaluation ground truth checking
+#' @return integer: percentage of correctly matched nodes when comparing the two clustering \code{x} and \code{y}.
+#' @export
+#' @examples
+#' g = generateEdgeList(n=1000)
+#' res = ML_RMCL(g)
+#' clusterEval(g$clusters, res)
+clusterEval = function(x, y, verb = TRUE, perf = FALSE){
+  tot = 0
+  if(length(unique(x)) != length(unique(y))){
+    if(verb) print(paste("Different number of clusters:", length(unique(x)), "and",length(unique(y))))
+    if(perf) return(0)
+    else warning("Not perfect")
+  }
+  for(i in unique(x)){
+    tab = table(y[x == i])
+    j = names(which(tab == max(tab))[1])
+    f = sum(tab[names(tab) != j])
+    if(verb) print(paste("Cluster", i, "matches to", j, "with **", f , "** faults"))
+    tot = tot + f
+  }
+  if(verb) print(paste("Total missmatch:", tot))
+  if(verb) print(paste("Rate of success: ", 1-(tot/length(x))))
+  return(1-(tot/length(x)))
 }

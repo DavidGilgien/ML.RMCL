@@ -11,7 +11,7 @@ avgNcut(g, clusters, verb = FALSE, ignore.zero = FALSE)
 
 \item{clusters}{vector of size \code{n}. Element \code{i} indicates the cluster of node \code{v_i}.}
 
-\item{verb}{boolean value: if \code{TRUE}, the fuction prints the n-cut of all clusters.}
+\item{verb}{boolean value: if \code{TRUE}, the function prints the n-cut of all clusters.}
 
 \item{ignore.zero}{boolean value: if \code{TRUE}, clusters with internal degree 0 are ignored.}
 }
@@ -23,7 +23,7 @@ This function computes the average normalized n-cut of a clustering.
 }
 \examples{
 g = generateEdgeList(n=1000)
-res = ML_MCL(g)
+res = ML_RMCL(g)
 avgNcut(g, res, verb = TRUE)
 }
 \keyword{average}
