@@ -47,7 +47,7 @@ When \code{timer=TRUE}, a list of two elements: \code{res} the clustering vector
 This function implements the multi-level regularized markov clustering. It uses flow simulation of a graph to find clusters.
 }
 \examples{
-g = generateEdgelist(n = 1000)
+g = generateEdgeList(n = 1000)
 clustering = ML_RMCL(g)
 }
 \keyword{clustering}

@@ -47,6 +47,7 @@ ELgraph <- function(edgeList, nodeList = NULL, nodeMap = NULL, clusters = NULL, 
 #' @keywords sparse matrix adjacency
 #' @return A matrix of sparse format from package Matrix with entries corresponding to the edge list of the given graph
 #' @export
+#' @import Matrix
 #' @examples
 #' M = getSparseMat(g)
 getSparseMat <- function(graph)
