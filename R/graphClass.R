@@ -51,17 +51,6 @@ ELgraph <- function(edgeList, nodeList = NULL, nodeMap = NULL, clusters = NULL, 
 #' M = getSparseMat(g)
 getSparseMat <- function(graph)
 {
-  UseMethod("getSparseMat",graph)
-}
-
-getSparseMat.default <- function(graph)
-{
-  stop("This method can only be called on a object of class ELgraph")
-  return()
-}
-
-getSparseMat.ELgraph <- function(graph)
-{
   M = sparseMatrix(i = match(graph$edgeList$i, graph$nodeList),
                    j = match(graph$edgeList$j, graph$nodeList),
                    x = graph$edgeList$x,
