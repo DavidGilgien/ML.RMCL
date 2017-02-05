@@ -13,7 +13,7 @@
 #' @export
 #' @examples
 #' g = generateEdgeList(n=1000)
-generateEdgeList = function(k = 2, aid = 100, aed = 10, n = 100, prob = NULL, directed = FALSE){
+generateEdgeList = function(k = 2, aid = 100, aed = 10, n = 1000, prob = NULL, directed = FALSE){
   z = sample(k, size = n, replace = TRUE, prob = prob)
   el_list = list()
   for (i in seq(1,n,1)) {

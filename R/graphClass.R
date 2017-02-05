@@ -8,6 +8,7 @@
 #' @param directed boolean value describing if the edges are directed.
 #' @keywords graphs object
 #' @return A graph object 
+#' @import data.table
 #' @export
 #' @examples
 #' g = ELgraph(data.table("i"=c(2,5,6,3,2), "j" =c(4,4,3,1,5)))

@@ -4,7 +4,7 @@
 \alias{generateEdgeList}
 \title{Synthetic Graph Generation}
 \usage{
-generateEdgeList(k = 2, aid = 100, aed = 10, n = 100, prob = NULL,
+generateEdgeList(k = 2, aid = 100, aed = 10, n = 1000, prob = NULL,
   directed = FALSE)
 }
 \arguments{
