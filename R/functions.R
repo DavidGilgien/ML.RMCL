@@ -32,7 +32,7 @@ generateEdgeList = function(k = 2, aid = 100, aed = 10, n = 1000, prob = NULL, d
 nCut = function(g, cluster, ignore.zero = FALSE){
   el = g$edgeList
   cut = el[xor(i %in% cluster, j %in% cluster), sum(x)]
-  deg = el[i %in% cluster & j %in% cluster, sum(x)]
+  deg = el[i %in% cluster & j %in% cluster, sum(x)] * 2
   if(deg == 0){
     warning("One cluster has degree 0")
     if(ignore.zero) return(NA)
