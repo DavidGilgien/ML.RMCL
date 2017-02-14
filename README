@@ -1,0 +1,10 @@
+R package for Multi-Level Regularized Markov Clustering
+-------------------------------------------------------
+Installation R commands:
+
+install.packages("devtools") #If needed
+library(devtools)
+install_github("DavidGilgien/ML.RMCL")
+library(ML.RMCL)
+
+?ML_RMCL #Main function documentation
